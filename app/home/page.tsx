@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
-import getAllUsers from '../../lib/getAllUsers'
+import getAllUsers from '../lib/getAllUsers'
 import Link from "next/link"
-import PageStructure from '../../components/page-structure'
-import getHomePageData from '../../lib/getHomePageData'
-import getProductsData from '../../lib/getProductsData'
+import PageStructure from '../components/page-structure'
+import getHomePageData from '../lib/getHomePageData'
+import getProductsData from '../lib/getProductsData'
 export const metadata: Metadata = {
     title: 'Users',
 }

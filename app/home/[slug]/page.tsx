@@ -1,8 +1,8 @@
 // "use client"; // this is a client component
 
-import PageStructure from "../../../components/page-structure";
-import getHomePageData from "../../../lib/getHomePageData";
-import getProductsData from "../../../lib/getProductsData";
+import PageStructure from "../../components/page-structure";
+import getHomePageData from "../../lib/getHomePageData";
+import getProductsData from "../../lib/getProductsData";
 
 
 // async function getStaticParams(slug) {
