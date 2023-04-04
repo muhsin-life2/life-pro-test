@@ -1,8 +1,6 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { Session, User } from 'next-auth';
-import { JWT } from 'next-auth/jwt';
-import { AdapterUser } from 'next-auth/adapters';
+import { NextAuthOptions } from 'next-auth';
 export default NextAuth({
 
   providers: [
@@ -67,11 +65,16 @@ export default NextAuth({
         token = user.data.user
         token.token = user.data.token
       }
+
+      // console.log(token)
       return token
     },
-    async session(params: { session: Session; user: User | AdapterUser; token: JWT; }): Promise<Session> {
-      console.log(params.session);
-      return params.session;
+    async session( { session, user, token }) {
+      session.token = token
+      // console.log(session);
+      
+      // session.token = {}
+      return session;
     },
   },
 

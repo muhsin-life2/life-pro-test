@@ -1,9 +1,10 @@
 // "use client"; // this is a client component
 
+import { FC, Suspense } from "react";
 import PageStructure from "../../components/page-structure";
 import getHomePageData from "../../lib/getHomePageData";
 import getProductsData from "../../lib/getProductsData";
-
+export const dynamic = 'force-static'
 
 // async function getStaticParams(slug) {
 
@@ -18,34 +19,8 @@ import getProductsData from "../../lib/getProductsData";
 
 // export default SinglePageContent;
 
-export async function generateStaticParams() {
-    // const res = await fetch("https://prodapp.lifepharmacy.com/api/cms/page/home")
-    // const data = await res.json();
-    // const home_page_data = data.data.content;
-    // // var allPaths = null
-    // const allPaths = home_page_data.filter(contObj => (contObj.section_type === "dynamic_grid" || "dynamic_slider_grid") && contObj.section_data_array && contObj.section_data_array.length != 0
-    // ).filter(contObj => contObj.section_data_array.some(secDataArray => secDataArray.slug != null))
-    // var slugs = []
-    // allPaths.map(secData =>
-    //     secData.section_data_array.map(secDataArray => (
-    //         secDataArray.slug != null &&
-    //         slugs.push(secDataArray.slug)
-    //     ))
-    // )
-    // var filt_paths = [...new Set(slugs)]
-
-    // console.log(home_page_data);
-
-
-    return []
-
-
-
-
-}
 
 async function getSinglePageData(params) {
-    // console.log(params);
 
     const res = await fetch(`https://prodapp.lifepharmacy.com/api/cms/page/${params}`)
 
@@ -54,9 +29,10 @@ async function getSinglePageData(params) {
     return res.json()
 }
 
-export default async function SinglePageContent({ params }) {
+const SinglePageContent = async ({ params }: { params: { slug: string } }) => {
+    const { slug } = params;
 
-    const data_res = await getSinglePageData(params.slug)
+    const data_res = await getSinglePageData(slug)
     const data = await data_res
 
     const pro_data_res = await getProductsData()
@@ -69,3 +45,27 @@ export default async function SinglePageContent({ params }) {
         </>
     )
 }
+
+export async function generateStaticParams() {
+
+    const res = await getHomePageData();
+    const home_page_data = await res.data.content
+    const allPaths = home_page_data.filter(contObj => (contObj.section_type === "dynamic_grid" || "dynamic_slider_grid") && contObj.section_data_array && contObj.section_data_array.length != 0
+    ).filter(contObj => contObj.section_data_array.some(secDataArray => secDataArray.slug != null))
+    var slugsData: string[] = []
+    allPaths.map(secData =>
+        secData.section_data_array.map(secDataArray => (
+            secDataArray.slug != null &&
+            slugsData.push(secDataArray.slug)
+        ))
+    )
+    var filt_paths = [...new Set(slugsData)]
+
+    return filt_paths.map((slug) => ({
+
+        slug,
+
+    }));
+}
+
+export default SinglePageContent;

@@ -1,4 +1,4 @@
-export default async function getSinglePageData(params) {
+export default async function getSessionData(params) {
 
     const res = await fetch(`https://prodapp.lifepharmacy.com/api/cms/page/${params}`)
 

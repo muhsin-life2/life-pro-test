@@ -59,6 +59,7 @@ const SingleProductsContent = ({ pro_data }) => {
                     </div>
                 </div>
                 : ""}
+                                          
 
 
             <div className="max-w-[1440px] mx-auto md:text-sm sm:text-xs md:bg-white bg-slate-50">
@@ -70,17 +71,15 @@ const SingleProductsContent = ({ pro_data }) => {
                                     <div className="flex lg:flex-col order-last lg:order-none md:my-0 my-3 ">
 
                                         {pro_data.images.gallery_images.map((gal_img, index) => (
-                                            <div className="mr-4 lg:w-fit w-[80px]">
+                                            <div className="mr-4 lg:w-fit w-full">
                                                 <Image className={index === selectedImg ? "border border-blue-400 rounded-lg mb-3  md:w-2/3 w-full lg:w-fit" : " rounded-lg border-2 mb-3 md:w-2/3 w-full lg:w-fit"} src={gal_img.thumbnail} height={80} width={80} onClick={() => onClickHandler(index)} alt="thumbnail-img" />
                                             </div>
                                         ))}
                                     </div>
 
-                                    <div className="flex flex-wrap md:border-none border-4 border-slate-100 m-2 rounded-2xl relative">
+                                    <div className="flex flex-wrap md:border-none border-4 border-slate-100 m-2 rounded-2xl ">
                                         <Image className=" lg:w-fit rounded-2xl " src={pro_data.images.gallery_images[selectedImg].image} height={600} width={600} alt="main-img" />
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-10 h-10 absolute top-5 left-5 bg-slate-100 p-2 rounded-full">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-                                        </svg>
+
                                     </div>
 
                                 </>
@@ -234,8 +233,8 @@ const SingleProductsContent = ({ pro_data }) => {
                                 </li>
                             </ul>
                         </div>
-                       
-                            {/* <Tab.Group>
+
+                        {/* <Tab.Group>
                                 <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1 w-full">
 
                                     <Tab
@@ -302,7 +301,7 @@ const SingleProductsContent = ({ pro_data }) => {
 
                                 </Tab.Panels>
                             </Tab.Group> */}
-                  
+
                         <div className="flex justify-between">
                             <img src="https://lifeadmin-app.s3.me-south-1.amazonaws.com/mobile-app/homescreen/Product%20page%20banner/ppb-1.gif" width="48%" className="" />
                             <img src="https://lifeadmin-app.s3.me-south-1.amazonaws.com/mobile-app/homescreen/Product%20page%20banner/ppb-2.gif" width="48%" className="" />

@@ -1,7 +1,7 @@
 "use client"
 import Navbar from "./navbar"
 import Footer from "./footer"
-
+import { Suspense } from "react";
 export default function Layout({ children, data, brands_data, sessionServ }) {
 
   function searchButtonOnLeave(e) {

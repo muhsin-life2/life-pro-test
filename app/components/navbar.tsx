@@ -27,13 +27,15 @@ import 'swiper/css/pagination';
 import Example from "./categories-accordion";
 import Link from "next/link";
 import { Menu } from "@headlessui/react";
-import { Dialog, Transition } from "@headlessui/react";
+import { Dialog, Transition, RadioGroup } from "@headlessui/react";
 import MenuLanguage from "./auth-modal";
+import NextAuth from "next-auth/next";
+import CheckIcon from "@heroicons/react/20/solid/CheckIcon";
+import AccountDetails from "./accountDetails";
 // import MyModal from "./modals-comp";
 
 const Navbar = ({ data, brands_data, sessionServ }) => {
   const { data: session } = useSession()
-
   const [searchData, setData] = useState({
     results: [
       {
@@ -50,7 +52,6 @@ const Navbar = ({ data, brands_data, sessionServ }) => {
 
     ]
 
-
   })
   const [phoneNumber, setPhoneNumber] = useState('');
   const [signInUsing, signInSet] = useState("");
@@ -66,7 +67,7 @@ const Navbar = ({ data, brands_data, sessionServ }) => {
   const [notValidOTPPageVisib, setnotValidOTPPageVisib] = useState(false);
   const [welcomeBackPopUp, setwelcomeBackPopUp] = useState(false);
   const [addNewAddress, setaddNewAddress] = useState(false);
-  const [addNewAddressClick, setAddNewAddressClick] = useState(true);
+  const [addNewAddressClick, setAddNewAddressClick] = useState(false);
 
   const [addnewAddressFormVisibility, setaddnewAddressFormVisibility] = useState(false);
   const [availableAddresses, setavailableAddresses] = useState(true);
@@ -113,7 +114,7 @@ const Navbar = ({ data, brands_data, sessionServ }) => {
   // const [counterVariable, setcounterVariable] = useState(60)
   // const timer1Ended = startTimer();
   const [showDropdown, setShowDropdown] = useState(false);
-  const [AddressDataIndex, setAddressDataIndex] = useState(0);
+  const [AddressDataIndex, setAddressDataIndex] = useState(sessionServ?.token?.addresses[0]);
   const [AddressData, setAddressData] = useState(null);
 
   const dropdown = useRef(null);
@@ -272,9 +273,9 @@ const Navbar = ({ data, brands_data, sessionServ }) => {
 
     }
   }
-  const refreshData = (asPath: string) => {
-    router.replace(asPath);
-  }
+  // const refreshData = () => {
+  //   router.replace();
+  // }
   function sendOTPtoPhoneNo(pHNumber, type) {
 
     var myHeaders = new Headers();
@@ -332,42 +333,41 @@ const Navbar = ({ data, brands_data, sessionServ }) => {
     }
   }
 
-    async function otpIsValid(otpValue) {
-      if (signInUsing === "Phone") {
-        await signIn('credentials', { phone: phoneNumberforOTP, code: otpValue, isPhone: "true", redirect: false })
-          .then(async (res) => {
-            if (res?.ok) {
-              // setModalAction("authentication-modal", "close")
-              await refreshData(router.asPath).then(() => {
-                setaddNewAddress(true);
-              })
-            }
-            else {
-              // console.log(error)
-              setnotValidOTPPageVisib(true)
-            }
-          })
-      }
-      else {
-        await signIn('credentials', { email: phoneNumberforOTP, code: otpValue, isPhone: "false", redirect: false })
+  async function otpIsValid(otpValue) {
+    if (signInUsing === "Phone") {
+      await signIn('credentials', { phone: phoneNumberforOTP, code: otpValue, isPhone: "true", redirect: false })
         .then(async (res) => {
-        if (res?.ok) {
-          await refreshData().then(() => {
-            setaddNewAddress(true);
-          })
-
-        }
-     
-       
+          if (res?.ok) {
+            // setModalAction("authentication-modal", "close")
+            await refreshData().then(() => {
+              setaddNewAddress(true);
+              setLocationModal(false);
+            })
+          }
           else {
             // console.log(error)
             setnotValidOTPPageVisib(true)
           }
-      
+        })
+    }
+    else {
+      await signIn('credentials', { email: phoneNumberforOTP, code: otpValue, isPhone: "false", redirect: false })
+        .then(async (res) => {
+          if (res?.ok) {
+            await refreshData().then(() => {
+              setaddNewAddress(true);
+              setLocationModal(false);
 
-      })
-  //for the address we use the same hook 
-  setPhoneNumberValidState(false)
+            })
+
+          }
+          else {
+            // console.log(error)
+            setnotValidOTPPageVisib(true)
+          }
+        })
+      //for the address we use the same hook 
+      setPhoneNumberValidState(false)
     }
   }
 
@@ -404,53 +404,50 @@ const Navbar = ({ data, brands_data, sessionServ }) => {
   //   }
   // }
 
-  function addrBlockOnClick(eleId) {
-    debugger;
-    let addrssBlocks = document.getElementsByClassName("addressBlock")
-    for (let addBlock of addrssBlocks) {
-      if (addBlock.classList.contains("!bg-blue-500")) {
-        addBlock.classList.remove("!bg-blue-500", "!text-white")
-        if ((addBlock.querySelector('svg') as SVGSVGElement).classList.contains("!fill-white")) {
-          (addBlock.querySelector('svg') as SVGSVGElement).classList.remove("!fill-white")
-          // addBlock.querySelector('svg').classList.add("hidden")
-        }
-      }
-    }
-    let addressBlock = (document.getElementById(eleId) as HTMLElement)
-    addressBlock.classList.add("!bg-blue-500", "!text-white");
-    document.getElementsByClassName(eleId)[0].classList.add("!fill-white")
-    let indx = eleId.replace("addr", '')
-    setAddressDataIndex(indx)
-  }
+  // function addrBlockOnClick(eleId) {
+  //   let addrssBlocks = document.getElementsByClassName("addressBlock")
+  //   for (let addBlock of addrssBlocks) {
+  //     if (addBlock.classList.contains("!bg-blue-500")) {
+  //       addBlock.classList.remove("!bg-blue-500", "!text-white")
+  //       if ((addBlock.querySelector('svg') as SVGSVGElement).classList.contains("!fill-white")) {
+  //         (addBlock.querySelector('svg') as SVGSVGElement).classList.remove("!fill-white")
+  //         // addBlock.querySelector('svg').classList.add("hidden")
+  //       }
+  //     }
+  //   }
+  //   let addressBlock = (document.getElementById(eleId) as HTMLElement)
+  //   addressBlock.classList.add("!bg-blue-500", "!text-white");
+  //   document.getElementsByClassName(eleId)[0].classList.add("!fill-white")
+  //   let indx = eleId.replace("addr", '')
+  //   setAddressDataIndex(indx)
+  // }
+
   function saveAddresstoDb() {
     debugger
 
-    // var raw = JSON.stringify({
-    //   addressDatas
-    // });
 
-    // var requestOptions = {
-    //   method: 'POST',
-    //   headers: {
-    //     Authorization: `Bearer ${session.token.token}`,
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: JSON.stringify(formData)
-    // };
-    // console.log(requestOptions);
-    // const res = fetch("https://prodapp.lifepharmacy.com/api/user/save-address", requestOptions)
-    //   .then(response => {
-    //     if (response.ok) {
-    //       setAddressDataIndex(0);
-    //       setaddNewAddress(false);
-    //       refreshData();
-    //       return response.json();
-    //     } else {
-    //       throw new Error('Request failed');
-    //     }
-    //   })
-    //   .then(result => console.log(result))
-    //   .catch(error => console.log('error while fetching search data', error));
+    var requestOptions = {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${sessionServ.token.token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData)
+    };
+    console.log(requestOptions);
+    const res = fetch("https://prodapp.lifepharmacy.com/api/user/save-address", requestOptions)
+      .then(response => {
+        if (response.ok) {
+          setAddressDataIndex(0);
+          setaddNewAddress(false);
+          refreshData();
+          return response.json();
+        } else {
+          throw new Error('Request failed');
+        }
+      })
+      .then(result => console.log(result))
+      .catch(error => console.log('error while fetching search data', error));
 
 
   }
@@ -481,11 +478,10 @@ const Navbar = ({ data, brands_data, sessionServ }) => {
   });
 
   const router = useRouter();
-  // Call this function whenever you want to
-  // refresh props!
-  // const refreshData = async () => {
-  //   router.replace(router.asPath);
-  // }
+
+  const refreshData = async () => {
+    router.refresh()
+  }
   const formDatahandleChange = (e) => {
     debugger
     const { name, value } = e.target;
@@ -502,37 +498,37 @@ const Navbar = ({ data, brands_data, sessionServ }) => {
     // setAddressData(formData)
     // console.log(AddressData);
     saveAddresstoDb()
-    console.log(formData);
+    // console.log(formData);
     // setaddNewAddress(false)
 
-    console.log(AddressDataIndex);
+    console.log(formData);
 
   }
 
-  // function displayedAddress(displayAddressData) {
-  //   // console.log(sessionServ);
+  function displayedAddress(displayAddressData) {
+    // console.log(sessionServ);
 
-  //   return `${displayAddressData.building}, ${displayAddressData.flat_number} - ${displayAddressData.street_address} - ${displayAddressData.city} - ${displayAddressData.area} - ${displayAddressData.state} - ${displayAddressData.country}`.substring(0, 30) + '...'
-  // }
+    return `${displayAddressData?.building}, ${displayAddressData?.flat_number} - ${displayAddressData?.street_address} - ${displayAddressData?.city} - ${displayAddressData?.area} - ${displayAddressData?.state} - ${displayAddressData?.country}`.substring(0, 30) + '...'
+  }
 
 
-  // function locationOnClickHandle(sessionData) {
-  //   debugger
-  //   if (session != null) {
-  //     setaddNewAddress(true)
+  function locationOnClickHandle() {
+    debugger
+    if (sessionServ != null) {
+      setaddNewAddress(true)
 
-  //     if (sessionData.length > 0) {
-  //       setavailableAddresses(true)
-  //     }
-  //     else if (sessionData.length == 0) {
-  //       setAddNewAddressClick(true)
-  //     }
-  //   }
-  //   else {
+      if (sessionServ.token.addresses.length > 0) {
+        setavailableAddresses(true)
+      }
+      else if (sessionServ.token.addresses.length == 0) {
+        setAddNewAddressClick(true)
+      }
+    }
+    else {
+      setIsOpen(true);
+    }
 
-  //   }
-
-  // }
+  }
   const countrySelect = (e) => {
     debugger
     const imgElement = e.target.parentElement.querySelector('img');
@@ -552,18 +548,13 @@ const Navbar = ({ data, brands_data, sessionServ }) => {
 
         <div className="text-end text-md my-auto">Download</div>
       </div>
-      <div className="sticky top-0  z-50 bg-white mx-auto opacity-95">
+      <div className="sticky top-0  z-50 bg-white mx-auto ">
 
-        <div className="bg-[#002579]  backdrop-blur backdrop-filter ">
+        <div className="md:bg-[#002579] bg-white  backdrop-blur backdrop-filter ">
           <div className="mx-auto flex max-w-[1440px] gap-5  px-4 py-4">
             <Link href={`/home`} className="my-auto">
               <Image src="https://www.lifepharmacy.com/images/logo-white.svg" alt=""
                 className=" bg-[#002579] filter md:flex hidden" width={380} height={250} />
-              {/* <div onClick={() => { setSideBarState(true) }} className="my-auto">
-                  <svg xmlns="http://www.w3.org/2000/svg" data-modal-target="headlessui-dialog-12" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-7 h-7 lg:hidden md:hidden my-auto">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                  </svg>
-                </div> */}
 
 
               <Image className="mr-auto w-7 lg:hidden md:hidden" src="https://www.lifepharmacy.com/images/life.svg" alt="" width={100} height={100} />
@@ -734,126 +725,37 @@ const Navbar = ({ data, brands_data, sessionServ }) => {
 
             <div className="grid grid-flow-col w-100 gap-5 md:flex lg:flex my-auto">
               <Menu as="div" className="relative inline-block text-left">
-                <Menu.Button className=" flex flex-col md:flex lg:flex" onClick={() => { setauthModal(true) }}>
+                <Menu.Button className="flex flex-col md:flex lg:flex" onClick={() => { setauthModal(true) }}>
                   <Image src={countrySet} alt=""
                     className=" rounded-2xl my-auto  h-10 w-10" width={100} height={100} />
-                  <div className="text-[11px] text-center text-white">Arabic</div>
+                  <div className="text-[11px] text-center md:text-white">Arabic</div>
                 </Menu.Button>
                 <MenuLanguage countrySelect={countrySelect} />
-
               </Menu>
-              {/* {session ? <><a href="#" ref={dropdown} onClick={() => { setShowDropdown(!showDropdown) }} className=" flex-col md:hidden lg:flex hidden" id="mega-menu-dropdown-button" data-dropdown-toggle="mega-menu-dropdown">
-              <img src="https://cdn-icons-png.flaticon.com/512/309/309748.png?w=740t=st=1678711444~exp=1678712044~hmac=9fdd9608d210eeffcc5069fd9c6888bb3fcb3407e24160947ac7f3c7a85ca203" className="w-9 h-9 my-auto mx-auto" />
+
+              {session ? <>
+                <Menu as="div" className="relative inline-block text-left my-auto">
+                  <Menu.Button className="flex-col md:hidden lg:flex hidden" onClick={() => { setShowDropdown(!showDropdown) }}>
+
+                    <img src="https://cdn-icons-png.flaticon.com/512/309/309748.png?w=740t=st=1678711444~exp=1678712044~hmac=9fdd9608d210eeffcc5069fd9c6888bb3fcb3407e24160947ac7f3c7a85ca203" className="w-9 h-9 my-auto mx-auto" />
+                    <div className="text-[11px] text-center text-white">Account</div>
+
+                  </Menu.Button>
+
+                  <AccountDetails sessionData={sessionServ} signOut={signOut} refreshData={refreshData} />
+
+                </Menu>
 
 
-              <div className="text-[11px] text-center text-white">Account</div>
+              </> : <a href="#" className=" flex-col md:hidden lg:flex hidden" onClick={() => { setLocationModal(true) }}>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5"
+                  stroke="currentColor" className=" my-auto text-white w-8 h-8 mx-auto">
+                  <path strokeLinecap="round" strokeLinejoin="round"
+                    d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                </svg>
 
-            </a>
-              {showDropdown ?
-                <div id="mega-menu-dropdown" className="hidden lg:flex mt-[70px] absolute z-10  w-auto  text-sm bg-gradient-to-r from-pink-100 to-teal-100 border  border-gray-100 shadow-md    ">
-                  <div className="p-4 pb-0 text-gray-900 md:pb-4 ">
-                    <ul className="space-y-4" aria-labelledby="mega-menu-dropdown-button">
-                      <li>
-                        <a href="#" className=" text-lg text-gray-800  hover:text-blue-600  ">
-                          Signed in as <br /><span className="font-bold">{session.token.name}</span>
-                        </a>
-                      </li>
-                      {session.token.email ? <li>
-                        <a href="#" className="text-md  hover:text-blue-600  flex items-center gap-4">
-
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-6 h-6 fill-orange-300 ">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-                          </svg>
-                          {(session.token.email).substring(0, 16) + '...'}
-                        </a>
-
-                      </li> : ""}
-                      {session.token.phone ?
-                        <li>
-                          <a href="#" className="text-md  hover:text-blue-600  flex items-center gap-4">
-
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-6 h-6 fill-green-600 text-green-600">
-                              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
-                            </svg>
-
-                            {session.token.phone}
-                          </a>
-
-                        </li> : ""}
-
-                      <li>
-                        <a href="#" className="  hover:text-blue-600  flex items-center gap-4">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-6 h-6 fill-blue-300">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-                          </svg>
-                          Dashboard
-                        </a>
-                      </li>
-                      <li>
-                        <a href="#" className="  hover:text-blue-600   flex items-center gap-4">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-6 h-6 fill-gray-300">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                          </svg>
-                          Orders
-                        </a>
-                      </li>
-                      <li>
-                        <a href="#" className=" hover:text-blue-600  flex items-center gap-4">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.0" stroke="currentColor" className="w-6 h-6 text-blue-600 ">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
-                          </svg>
-                          Return Options
-                        </a>
-                      </li>
-                      <li>
-                        <a href="#" className="  hover:text-blue-600  flex items-center gap-4">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-6 h-6 fill-orange-200">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          Wallet
-                          <span className="bg-indigo-600 px-2 rounded-lg text-white">$ {session.token.wallet_balance}</span>
-                        </a>
-                      </li>
-                      <li>
-                        <a href="#" className=" hover:text-blue-600  flex items-center gap-4">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-6 h-6 fill-green-300 text-gray-800">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M11.35 3.836c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m8.9-4.414c.376.023.75.05 1.124.08 1.131.094 1.976 1.057 1.976 2.192V16.5A2.25 2.25 0 0118 18.75h-2.25m-7.5-10.5H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V18.75m-7.5-10.5h6.375c.621 0 1.125.504 1.125 1.125v9.375m-8.25-3l1.5 1.5 3-3.75" />
-                          </svg>
-                          Appointments
-                        </a>
-                      </li>
-                      <li>
-                        <a href="#" className=" hover:text-blue-600  flex items-center gap-4">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-6 h-6 fill-gray-300 ">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.76c0 1.6 1.123 2.994 2.707 3.227 1.068.157 2.148.279 3.238.364.466.037.893.281 1.153.671L12 21l2.652-3.978c.26-.39.687-.634 1.153-.67 1.09-.086 2.17-.208 3.238-.365 1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
-                          </svg>
-                          Chat with Us
-                        </a>
-                      </li>
-                      <li>
-                        <a href="#" onClick={(e) => {
-                          e.preventDefault()
-                          signOut()
-                          refreshData()
-                        }} className=" hover:text-blue-600  flex items-center gap-4">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" className="w-6 h-6 text-red-500">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M5.636 5.636a9 9 0 1012.728 0M12 3v9" />
-                          </svg>
-                          Sign Out
-                        </a>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-                : ""}</> : <a href="#" className=" flex-col md:hidden lg:flex hidden" onClick={() => { setLocationModal(true) }}>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5"
-                stroke="currentColor" className=" my-auto text-white w-8 h-8 mx-auto">
-                <path strokeLinecap="round" strokeLinejoin="round"
-                  d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-              </svg>
-
-              <div className="text-[11px] text-center text-white">Account</div>
-            </a>} */}
+                <div className="text-[11px] text-center text-white">Account</div>
+              </a>}
 
               <a href="#" className="flex flex-col md:hidden lg:flex hidden">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5"
@@ -1105,43 +1007,19 @@ const Navbar = ({ data, brands_data, sessionServ }) => {
 
 
       </div>
-      {/* <div className="bg-pink-700">
-          <div className="grid grid-cols-2 py-1 px-4 max-w-[1440px] mx-auto text-white lg:flex md:flex hidden  text-xs " >
-            <div className="my-auto"> Highest Rated Pharmacy App in UAE | Rating | Download </div>
-            <div className="text-end ml-auto"> <span className="font-bold">DELIVER TO:</span> {sessionServ && sessionServ?.length != 0 ? (displayedAddress(sessionServ[AddressDataIndex])) : "Select a Location"}
-                <button
-
-                  className="bg-white text-black rounded px-3 ml-3 py-1">CHANGE</button>
-              </div>
+      <div className="bg-pink-700">
+        <div className="grid grid-cols-2 py-1 px-4 max-w-[1440px] mx-auto text-white lg:flex md:flex hidden  text-xs " >
+          <div className="my-auto"> Highest Rated Pharmacy App in UAE | Rating | Download </div>
+          <div className="text-end ml-auto"> <span className="font-bold">DELIVER TO:</span> {sessionServ?.token.addresses && sessionServ?.token.addresses.length != 0 ? (displayedAddress(AddressDataIndex)) : "Select a Location"}
+            <button
+              className="bg-white text-black rounded px-3 ml-3 py-1" onClick={() => { locationOnClickHandle() }}>CHANGE</button>
           </div>
-        </div> */}
+        </div>
+      </div>
 
       <div className="sm:visible md:hidden ">
 
-        {/* <div className="px-4 py-2 flex ">
-            <Image className="mr-auto w-7" src="https://www.lifepharmacy.com/images/life.svg" alt="" width={100} height={100} />
-            <form className="flex items-center w-3/4">
-              <label for="simple-search" className="sr-only">Search</label>
-              <div className="relative w-full">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                  <svg aria-hidden="true" className="w-5 h-5 text-gray-500 " fill="currentColor"
-                    viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd"
-                      d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                      clip-rule="evenodd"></path>
-                  </svg>
-                </div>
-                <input type="text"
-                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-4     dark:focus:border-blue-500"
-                  placeholder="Search for Products..." required />
-              </div>
-            </form>
-            <div className="ml-auto mt-auto">
-              <Image src="https://www.lifepharmacy.com/images/svg/flag-ae.svg" alt=""
-                className="bg-pink-700 my-auto rounded-lg w-fit" width={100} height={100} />
-              <div className="text-sm">Arabic</div>
-            </div>
-          </div> */}
+
 
         <div className="grid grid-flow-col  bg-indigo-900 text-white text-xs px-4 py-2">
           <div>DELIVER TO: Business Bay, Dubai </div>
@@ -1174,51 +1052,7 @@ const Navbar = ({ data, brands_data, sessionServ }) => {
               <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
             </div>
             <div className="relative w-full h-full max-w-lg min-w-sm mx-auto h-auto">
-              <div className="relative bg-white rounded-lg shadow ">
-                <div className="flex items-center justify-between rounded-t ">
-                  <button type="button"
-                    className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center  "
-                    data-modal-hide="medium-modal">
-                    <button onClick={() => setIsOpen(false)}>
-                      <svg aria-hidden="true" className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
-                        xmlns="http://www.w3.org/2000/svg">
-                        <path fill-rule="evenodd"
-                          d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                          clip-rule="evenodd"></path>
-                      </svg>
-                    </button>
-                  </button>
-                </div>
-                <div className="p-6 space-y-6">
-                  <h3 className="text-2xl font-medium text-blue-400  text-center">
-                    Where do you want the delivery?
-                  </h3>
-                  <p className="text-base leading-relaxed text-gray-500  text-center">
-                    By knowing your area, we will be able to provide instant delivery from the nearest Life
-                    store around you! </p>
-                  <button className="ml-auto bg-blue-400 p-3 text-white rounded-xl w-full">Detect My Location</button>
-                  <h3 className="text-xl font-medium  text-center">
-                    OR
-                  </h3>
-                  <div className="flex">
-                    <select id="states"
-                      className=" flex-shrink-0 rounded-l-lg bg-gray-50 text-gray-900 text-sm  block  p-2.5   ">
-                      <option selected>Ship To</option>
-                      <option value="CA">UAE</option>
-                      <option value="TX">KSA</option>
-                    </select>
-                    <label for="states" className="sr-only">Type Location</label>
-                    <input type="text"
-                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-r-lg border-l-gray-100 border-l-2  block w-full p-2.5     " placeholder="Type a Location" />
-                  </div>
-                  <a href="#"><h3 className="text-xl font-medium text-blue-400  text-center underline mt-16">
-                    Or Login Now
-                  </h3></a>
-                  <p className="text-base leading-relaxed text-gray-500  text-center">
-                    Get access to My Address, Orders & Prescriptions in your profile section.
-                  </p>
-                </div>
-              </div>
+          
             </div>
           </div>
         )} */}
@@ -1228,7 +1062,87 @@ const Navbar = ({ data, brands_data, sessionServ }) => {
           Toggle modal
         </button> */}
 
+      <Transition appear show={isOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={() => { setIsOpen(false) }}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black bg-opacity-25" />
+          </Transition.Child>
 
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center  text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white  text-left align-middle shadow-xl transition-all">
+                  <div className="relative bg-white rounded-lg shadow ">
+                    <div className="flex items-center justify-between rounded-t ">
+                      <button type="button"
+                        className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center  "
+                        data-modal-hide="medium-modal">
+                        <button onClick={() => setIsOpen(false)}>
+                          <svg aria-hidden="true" className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd"
+                              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                              clip-rule="evenodd"></path>
+                          </svg>
+                        </button>
+                      </button>
+                    </div>
+                    <div className="p-6 space-y-6">
+                      <h3 className="text-lg font-medium text-blue-400  text-center">
+                        Where do you want the delivery?
+                      </h3>
+                      <p className="text-sm leading-relaxed text-gray-500  text-center">
+                        By knowing your area, we will be able to provide instant delivery from the nearest Life
+                        store around you! </p>
+                      <button className="ml-auto bg-blue-400 p-3 text-white rounded-xl w-full">Detect My Location</button>
+                      <h3 className=" font-medium  text-center">
+                        OR
+                      </h3>
+                      <div className="flex">
+                        <select id="states"
+                          className=" flex-shrink-0 rounded-l-lg bg-gray-50 text-gray-900 text-sm  block  p-2.5   ">
+                          <option selected>Ship To</option>
+                          <option value="CA">UAE</option>
+                          <option value="TX">KSA</option>
+                        </select>
+                        <label htmlFor="states" className="sr-only">Type Location</label>
+                        <input type="text"
+                          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-r-lg border-l-gray-100 border-l-2  block w-full p-2.5     " placeholder="Type a Location" />
+                      </div>
+                      <a href="#"><h3 className=" font-medium text-blue-400  text-center underline mt-16" onClick={() => {
+                        setLocationModal(true)
+                        setIsOpen(false)
+                      }
+                      }>
+                        Or Login Now
+                      </h3></a>
+                      <p className="text-sm leading-relaxed text-gray-500  text-center">
+                        Get access to My Address, Orders & Prescriptions in your profile section.
+                      </p>
+                    </div>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
 
       <div id="location-modal" aria-hidden="true" className="hidden fixed top-0 left-0 right-0 z-50 hidden w-full p-4 overflow-x-hidden overflow-y-auto h-modal justify-center items-center" >
         <div id="overlay" className=" fixed inset-0 transition-opacity">
@@ -1479,7 +1393,7 @@ const Navbar = ({ data, brands_data, sessionServ }) => {
         </div>
       </div>
       <Transition appear show={locationModal} as={Fragment}>
-        <Dialog as="div" className="relative z-10" onClose={() => { setLocationModal(false) }}>
+        <Dialog as="div" className="relative z-50" onClose={() => { setLocationModal(false) }}>
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -1608,10 +1522,10 @@ const Navbar = ({ data, brands_data, sessionServ }) => {
                           <div className="flex items-start">
                             <div className="flex items-center h-5">
                             </div>
-                            {/* {countDownVisible  ? <div className="text-sm  text-gray-500" id="seconds-count">
-                                Didn't Receive Code? <div className="flex">Request again in {time != 0 ? time : stopTimer()} seconds</div>
-                              </div> : <button onClick={() => { isValidPhoneNoInput(true) }} type="button" className="bg-white hover:bg-blue-600 px-3 py-2 rounded-lg border text-blue-500 border-blue-500  hover:text-white text-xs tracking-widest" >RESEND OTP</button>
-                              } */}
+                            {/* {countDownVisible ? <div className="text-sm  text-gray-500" id="seconds-count">
+                              Didn't Receive Code? <div className="flex">Request again in {time != 0 ? time : stopTimer()} seconds</div>
+                            </div> : <button onClick={() => { isValidPhoneNoInput(true) }} type="button" className="bg-white hover:bg-blue-600 px-3 py-2 rounded-lg border text-blue-500 border-blue-500  hover:text-white text-xs tracking-widest" >RESEND OTP</button>
+                            } */}
 
                           </div>
                         </div>
@@ -1624,7 +1538,7 @@ const Navbar = ({ data, brands_data, sessionServ }) => {
                           </button>
                           <button type="button" onClick={(e) => {
                             e.preventDefault()
-                            // otpIsValid(state)
+                            otpIsValid(state)
                           }} disabled={state.length === 4 ? false : true} className={" disabled:bg-blue-300 bg-blue-500  items-center flex justify-center w-full text-white focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center "}>
                             <p className="mr-4">PROCEED</p>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-3 h-5">
@@ -1645,31 +1559,52 @@ const Navbar = ({ data, brands_data, sessionServ }) => {
       </Transition>
 
 
-      {notValidOTPPageVisib ? <>
+      <Transition appear show={notValidOTPPageVisib} as={Fragment}>
+        <Dialog as="div" className="relative z-10" onClose={() => { setnotValidOTPPageVisib(false) }}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black bg-opacity-25" />
+          </Transition.Child>
 
-        <div id="popup-modal" className="z-100 shadow-md  fixed top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 z-50  overflow-y-auto overflow-x-hidden p-4  md:h-auto h-[calc(100%-1rem)] ">
-
-          <div className="shadow-lg relative h-full w-full max-w-md md:h-auto bg-white rounded-3xl">
-            {/* <button type="button" className="absolute top-3 right-2.5 ml-auto inline-flex items-center rounded-lg bg-transparent p-1.5 text-sm text-gray-400 hover:bg-gray-200 hover:text-gray-900  " data-modal-hide="popup-modal">
-                  <svg aria-hidden="true" className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                  <span className="sr-only">Close modal</span>
-                </button> */}
-            <div className="rounded-t-3xl bg-red-500 p-6 text-center text-white">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="mx-auto h-28 w-28">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-3xl bg-white  text-left align-middle shadow-xl transition-all">
+                  <div className="rounded-t-3xl bg-red-500 p-6 text-center text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="mx-auto h-28 w-28">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className=" p-5 text-center">
+                    <h3 className="mb-5 text-center text-3xl font-bold">Oops</h3>
+                    <p className=" font-semibold text-gray-600">Something went wrong!</p>
+                    <p className=" font-semibold text-gray-600">Invalid code. Please enter the correct code.</p>
+                    <button onClick={() => { setnotValidOTPPageVisib(false) }} type="button" className="mt-10 rounded-lg border border-gray-200 bg-red-500 px-5 py-1.5 text-sm font-medium text-white hover:bg-red-700 hover:text-gray-900 focus:z-10 focus:outline-none focus:ring-4 focus:ring-gray-200 ">OK</button>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
             </div>
-            <div className=" p-5 text-center">
-              <h3 className="mb-5 text-center text-3xl font-bold">Oops</h3>
-              <p className=" font-semibold text-gray-600">Something went wrong!</p>
-              <p className=" font-semibold text-gray-600">Invalid code. Please enter the correct code.</p>
-              <button onClick={() => { setnotValidOTPPageVisib(false) }} type="button" className="mt-10 rounded-lg border border-gray-200 bg-red-500 px-5 py-1.5 text-sm font-medium text-white hover:bg-red-700 hover:text-gray-900 focus:z-10 focus:outline-none focus:ring-4 focus:ring-gray-200 ">OK</button>
-            </div>
-
           </div>
-        </div>
-      </>
-        : ""}
+        </Dialog>
+      </Transition>
+
+
+
       {/* {successOTP ? <>
           <div id="popup-modal" tabindex="-1" className="z-100 fixed top-1/2 left-1/2 z-50 h-[calc(100%-1rem)]  -translate-y-1/2 -translate-x-1/2 overflow-y-auto overflow-x-hidden p-4 shadow-md md:h-auto w-96 rounded-b-3xl">
             <div className="relative h-full w-full max-w-md  bg-white md:h-auto rounded-3xl">
@@ -1695,215 +1630,340 @@ const Navbar = ({ data, brands_data, sessionServ }) => {
 
         </>
           :""} */}
-      {sessionServ && addNewAddress ?
-        <div id="addNewAddressModal" aria-hidden="true" className=" fixed top-0 left-0 right-0 z-50 p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)]  flex justify-center items-center no-scrollbar">
-          <div id="overlay" className=" fixed inset-0 transition-opacity">
-            <div className="absolute inset-0 bg-gray-500 opacity-50"></div>
-          </div>
-          {sessionServ.length === 0 && addNewAddressClick ? <div className="relative w-full h-full max-w-2xl md:h-auto ">
-            <div className=" bg-white rounded-lg shadow  h-full overflow-y-auto no-scrollbar">
-              <div className="flex items-start justify-between ">
+      <Transition appear show={notValidOTPPageVisib} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={() => { setnotValidOTPPageVisib(false) }}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black bg-opacity-25" />
+          </Transition.Child>
 
-                <button type="button" className="text- bg-transparent  hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto absolute -right-4 -top-4 inline-flex items-center  " onClick={() => { setaddNewAddress(false) }}>
-                  <svg aria-hidden="true" className="w-6 h-6 bg-red-400 rounded-full p-1 text-white" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                  <span className="sr-only">Close modal</span>
-                </button>
-              </div>
-              <div className="px-6 py-3 space-y-6">
-                <img src="https://www.lifepharmacy.com/images/map.svg" alt="" className="w-36" />
-                {/* <Map address={'1600 Amphitheatre Parkway, Mountain View, CA'} /> */}
-
-                <div className="py-5">
-                  <h5 className="text-indigo-800 font-bold pb-1">You have no saved Addresses</h5>
-                  <p className="text-gray-400 text-sm py-1">Start by adding a new address</p>
-                </div>
-              </div>
-              <div className="flex items-center px-5 pb-2 space-x-2 border-t border-gray-200 rounded-b  sticky bottom-0">
-                <button type="button" className="text-white bg-blue-500 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg w-full px-5 py-2.5 text-center text-xs" onClick={() => {
-                  setAddNewAddressClick(false)
-                  setaddnewAddressFormVisibility(true)
-                }}>ADD NEW ADDRESS</button>
-              </div>
-            </div>
-          </div> :
-            ""}
-
-          {sessionServ.length > 0 && availableAddresses ? <div className="relative h-full  w-full max-w-4xl  ">
-            <div className="h-fit overflow-y-auto overflow-x-hidden rounded-lg bg-white shadow  no-scrollbar ">
-              <div className="flex items-start justify-between">
-                <button onClick={() => {
-                  setaddNewAddress(false)
-                  setavailableAddresses(false)
-                }} type="button" className=" absolute -right-4 -top-4 ml-auto inline-flex items-center rounded-lg bg-transparent p-1.5 text-sm hover:text-gray-900  ">
-                  <svg className="h-6 w-6 rounded-full bg-red-400 p-1 text-white" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" fill-rule="evenodd" clip-rule="evenodd"></path></svg><span className="sr-only">Close modal</span>
-                </button>
-              </div>
-              <div className="space-y-3 px-6 py-5 ">
-                <div className="flex justify-between">
-                  <div className="flex space-x-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="h-5 w-5">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-3xl bg-white  text-left align-middle shadow-xl transition-all">
+                  <div className="rounded-t-3xl bg-red-500 p-6 text-center text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="mx-auto h-28 w-28">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <h5 className=" font-bold text-indigo-800">Addresses</h5>
                   </div>
-                  <button className="rounded-lg bg-blue-500 px-3 py-2 text-sm uppercase text-white" onClick={() => {
-                    setavailableAddresses(false)
-                    setaddnewAddressFormVisibility(true)
-                  }}>Add New Address</button>
-                </div>
+                  <div className=" p-5 text-center">
+                    <h3 className="mb-5 text-center text-3xl font-bold">Oops</h3>
+                    <p className=" font-semibold text-gray-600">Something went wrong!</p>
+                    <p className=" font-semibold text-gray-600">Invalid code. Please enter the correct code.</p>
+                    <button onClick={() => { setnotValidOTPPageVisib(false) }} type="button" className="mt-10 rounded-lg border border-gray-200 bg-red-500 px-5 py-1.5 text-sm font-medium text-white hover:bg-red-700 hover:text-gray-900 focus:z-10 focus:outline-none focus:ring-4 focus:ring-gray-200 ">OK</button>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
+      {/* {sessionServ && sessionServ.token.addresses.length !=0 ?setavailableAddresses(true):setaddNewAddress(true)}  */}
+      <Transition appear show={sessionServ && addNewAddress ? true : false} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={() => { setaddNewAddress(false) }}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black bg-opacity-25" />
+          </Transition.Child>
 
-                <h5 className="rounded-full bg-blue-300 px-2 py-1 text-sm font-bold text-indigo-800">SELECTED ADDRESS</h5>
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-2xl transform  overflow-y-auto no-scrollbar rounded-2xl text-left align-middle shadow-xl transition-all ">
+                  {addNewAddressClick && sessionServ.token.addresses.length === 0 ?
+                    <div className=" bg-white rounded-lg shadow  overflow-y-auto no-scrollbar h-[calc(80vh-1rem)]">
+                      <div className="flex items-start justify-between ">
+                        {/* 
+                        <button type="button" className="text- bg-transparent  hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto absolute -right-4 -top-4 inline-flex items-center  " onClick={() => { setaddNewAddress(false) }}>
+                          <svg aria-hidden="true" className="w-6 h-6 bg-red-400 rounded-full p-1 text-white" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                          <span className="sr-only">Close modal</span>
+                        </button> */}
+                      </div>
+                      <div className="px-6 py-3 space-y-6">
+                        <img src="https://www.lifepharmacy.com/images/map.svg" alt="" className="w-36" />
+                        {/* <Map address={'1600 Amphitheatre Parkway, Mountain View, CA'} /> */}
 
-                {sessionServ.map((addr, indx) => (
-
-                  <div className={(indx === 0 ? "!bg-blue-500 !text-white " : "") + "text-gray-500 flex justify-between space-x-2  px-4 py-4 cursor-pointer rounded-lg addressBlock border-2 border-gray-200"} id={indx + "addr"} onClick={() => { addrBlockOnClick(indx + "addr") }}>
-
-
-                    {/* <input type="radio" className="mb-auto m-1 focus:ring-0 w-3 h-3" /> */}
-                    <div className="">
-                      <div className="flex space-x-4">
-                        <div className="flex-col flex  font-bold text-sm">
-                          <h5 className="  ">NAME:</h5>
-                          <h5 className="  ">ADDRESS:</h5>
-                          <h5 className="">PHONE:</h5>
-                        </div>
-                        <div className="text-sm">
-                          <h5 className="  font-medium ">{addr.name}</h5>
-                          <h5 className="  font-medium">{addr.area} - {addr.state} - {addr.country}</h5>
-                          <h5 className="  font-medium">{addr.phone}</h5>
+                        <div className="py-5">
+                          <h5 className="text-indigo-800 font-bold pb-1">You have no saved Addresses</h5>
+                          <p className="text-gray-400 text-sm py-1">Start by adding a new address</p>
                         </div>
                       </div>
-                    </div>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={(indx === 0 ? "!fill-white" : "") + " w-6 h-6 fill-gray-200 my-auto  " + (indx + 'addr')}>
-                      <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" />
-                    </svg>
-                  </div>
-                ))}
-
-
-                <div className="flex bg-pink-100 p-2 text-xs text-blue-800 ">Changing your delivery address might affect the availability of some items in your cart, please remember to review you cart if or one you switch addresses.</div>
-
-
-              </div>
-              <div className="w-full bg-white px-6 py-3 sticky bottom-0">
-                <button className="text-[11px]  px-3 py-2 w-full text-center bg-blue-500 text-white rounded-lg hover:bg-blue-600" onClick={() => { setaddNewAddress(false) }} >CONFIRM ADDRESS</button>
-              </div>
-            </div>
-
-          </div> : ""}
-
-
-
-          {addnewAddressFormVisibility ?
-            <div className="max-w-4xl relative h-full w-full ">
-              <div className="relative   rounded-lg h-fit overflow-y-auto no-scrollbar bg-white">
-                <div className="absolute top-3 left-2.5 flex">
-                  <button type="button" className=" ml-auto inline-flex items-center rounded-lg bg-white bg-transparent p-1.5 text-sm text-gray-400 hover:bg-gray-200 hover:text-gray-900  " onClick={() => {
-                    setaddNewAddress(false)
-                    setaddnewAddressFormVisibility(false)
-                  }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" className="h-4 w-4">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                    </svg>
-
-                    <span className="sr-only">Close modal</span>
-                  </button>
-                  <h3 className="ml-3 text-sm font-bold text-indigo-800  p-1.5">Your Address</h3>
-
-                </div>
-
-
-                <div className="px-6 pt-16 pb-4 bg-white">
-                  <form className="space-y-3 " onSubmit={addressFormOnSubmit}>
-                    <div>
-                      <label className="mb-3 block w-fit rounded-full bg-indigo-800 px-3 py-1 text-[10px] font-semibold text-white ">PERSONAL DETAILS</label>
-                      <input type="text" name="name" value={formData.name} onChange={formDatahandleChange} onBlur={(e) => { e.target.value === "" ? e.target.classList.add("border-red-500") : e.target.classList.remove("border-red-500") }} className={"focus:outline-none block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500      addressFormInputEle"} placeholder="Full Name *"
-                        required />
-
-                    </div>
-                    <div>
-                      <label className=" text-sm block mb-2 font-medium text-gray-90 file: ">Enter your mobile number <span className="text-red-500">*</span></label>
-                      <div className="relative border border-gray-300 pl-3 rounded-lg">
-                        <PhoneInput
-                          placeholder="Enter phone number"
-                          value={formData.phone}
-                          onChange={isValidCredentials}
-                          international
-                          defaultCountry="AE"
-                          id="phoneInputOTPAddress"
-                          name="phone"
-                          required
-                        />
-                        {isPhoneNumberValid ?
-                          <div
-                            className="absolute top-[16px] right-3 grid h-5 w-5 -translate-y-2/4 place-items-center text-blue-gray-500"
-                          >
-                            <svg className="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52"> <circle className="checkmark__circle" cx="26" cy="26" r="25" fill="none" /> <path className="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+                      <div className="flex items-center px-5 pb-2 space-x-2 border-t border-gray-200 rounded-b  sticky bottom-0">
+                        <button type="button" className="text-white bg-blue-500 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg w-full px-5 py-2.5 text-center text-xs" onClick={() => {
+                          setAddNewAddressClick(false)
+                          setaddnewAddressFormVisibility(true)
+                        }}>ADD NEW ADDRESS</button>
+                      </div>
+                    </div> : ""}
+                  {addnewAddressFormVisibility ?
+                    <div className="max-w-4xl relative  w-full ">
+                      <div className="relative   rounded-lg  overflow-y-auto no-scrollbar bg-white">
+                        <div className="absolute top-3 left-2.5 flex">
+                          <button type="button" className=" ml-auto inline-flex items-center rounded-lg bg-white bg-transparent p-1.5 text-sm text-gray-400 hover:bg-gray-200 hover:text-gray-900  " onClick={() => {
+                            setaddNewAddress(false)
+                            setaddnewAddressFormVisibility(false)
+                          }}>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" className="h-4 w-4">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
                             </svg>
 
-                          </div> : ""}
+                            <span className="sr-only">Close modal</span>
+                          </button>
+                          <h3 className="ml-3 text-sm font-bold text-indigo-800  p-1.5">Your Address</h3>
+
+                        </div>
+
+
+                        <div className="px-6 pt-16 pb-4 bg-white">
+                          <form className="space-y-3 " onSubmit={addressFormOnSubmit}>
+                            <div>
+                              <label className="mb-3 block w-fit rounded-full bg-indigo-800 px-3 py-1 text-[10px] font-semibold text-white ">PERSONAL DETAILS</label>
+                              <input type="text" name="name" value={formData.name} onChange={formDatahandleChange} onBlur={(e) => { e.target.value === "" ? e.target.classList.add("border-red-500") : e.target.classList.remove("border-red-500") }} className={"focus:outline-none block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500      addressFormInputEle"} placeholder="Full Name *"
+                                required />
+
+                            </div>
+                            <div>
+                              <label className=" text-sm block mb-2 font-medium text-gray-90 file: ">Enter your mobile number <span className="text-red-500">*</span></label>
+                              <div className="relative border border-gray-300 pl-3 rounded-lg">
+                                <PhoneInput
+                                  placeholder="Enter phone number"
+                                  value={formData.phone}
+                                  onChange={isValidCredentials}
+                                  international
+                                  defaultCountry="AE"
+                                  id="phoneInputOTPAddress"
+                                  name="phone"
+                                  required
+                                />
+                                {isPhoneNumberValid ?
+                                  <div
+                                    className="absolute top-[16px] right-3 grid h-5 w-5 -translate-y-2/4 place-items-center text-blue-gray-500"
+                                  >
+                                    <svg className="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52"> <circle className="checkmark__circle" cx="26" cy="26" r="25" fill="none" /> <path className="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+                                    </svg>
+
+                                  </div> : ""}
+                              </div>
+                            </div>
+                            <div>
+                              <label className="mb-3 block w-fit rounded-full bg-indigo-800 px-3 py-1 text-[10px] font-semibold text-white ">ADDRESS DETAILS</label>
+
+                              <div className="flex w-1/2">
+                                <span className="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-200 px-3 text-sm text-gray-900    ">
+                                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="h-5 w-5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                                  </svg>
+                                </span>
+
+                                <select id="type" name="type" value={formData.type} onChange={formDatahandleChange} className="focus:outline-none block w-full min-w-0 flex-1 rounded-none rounded-r-lg border border-gray-300 bg-gray-50 p-2.5 text-sm">
+                                  <option selected value="Home">Home</option>
+                                  <option value="Work">Work</option>
+                                  <option value="Other">Other</option>
+                                </select>
+                              </div>
+                            </div>
+                            <div className="flex space-x-6 ">
+                              <input type="text" name="state" value={formData.state} onChange={formDatahandleChange} onBlur={(e) => { e.target.value === "" ? e.target.classList.add("border-red-500") : e.target.classList.remove("border-red-500") }} className={" addressFormInputEle focus:outline-none block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 formTextBox"} placeholder="Emirates *" required />
+
+                              <input type="text" name="city" value={formData.city} onChange={formDatahandleChange} onBlur={(e) => { e.target.value === "" ? e.target.classList.add("border-red-500") : e.target.classList.remove("border-red-500") }} className={"focus:outline-none addressFormInputEle block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 formTextBox"} placeholder="City *" required />
+                            </div>
+
+
+                            <input type="text" name="street_address" value={formData.street_address} onChange={formDatahandleChange} onBlur={(e) => { e.target.value === "" ? e.target.classList.add("border-red-500") : e.target.classList.remove("border-red-500") }} placeholder="Street Address *" className={"focus:outline-none addressFormInputEle block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 "}
+                              required />
+
+                            <div className="flex space-x-6">
+                              <input name="flat_number" value={formData.flat_number} onChange={formDatahandleChange} type="text" onBlur={(e) => { e.target.value === "" ? e.target.classList.add("border-red-500") : e.target.classList.remove("border-red-500") }} className={"focus:outline-none addressFormInputEle block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500"} placeholder="Flat / Villa *" required />
+                              <input name="building" value={formData.building} onChange={formDatahandleChange} type="text" onBlur={(e) => { e.target.value === "" ? e.target.classList.add("border-red-500") : e.target.classList.remove("border-red-500") }} className={"focus:outline-none addressFormInputEle block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500"} placeholder="Building *"
+                                required />
+                            </div>
+
+
+                            <div className="flex ">
+                              <span className="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-200 px-3 text-sm text-gray-900    ">
+                                Country
+                              </span>
+
+                              <select id="country" name="country" value={formData.country} onChange={formDatahandleChange} className="focus:outline-none block w-full min-w-0 flex-1 rounded-none rounded-r-lg border border-gray-300 bg-gray-50 p-2.5 text-sm">
+                                <option selected value="United Arab Emirates">United Arab Emirates</option>
+                                <option value="Saudi Arabia">Saudi Arabia</option>
+                              </select>
+                            </div>
+                            <textarea name="additional_info" value={formData.additional_info} onChange={formDatahandleChange} className="w-full border-gray-300 rounded-lg border p-2.5 focus:outline-none text-sm" rows={1} placeholder="Additional information (eg. Area, Landmark)"></textarea>
+
+                            <div className=" sticky bottom-2  border-0 rounded-lg">
+                              <button type="submit" className=" w-full rounded-full bg-blue-500  py-1.5 text-center text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 " >SAVE ADDRESS</button>
+                            </div>
+
+                          </form>
+
+                        </div>
+                      </div>
+                    </div> : ""}
+                  {sessionServ?.token.addresses.length > 0 && availableAddresses ?
+                    <div className=" overflow-y-auto overflow-x-hidden rounded-lg bg-white shadow no-scrollbar  h-[calc(80vh-1rem)]">
+                      <div className="flex items-start justify-between">
+                        {/* <button onClick={() => {
+                          setaddNewAddress(false)
+                          setavailableAddresses(false)
+                        }} type="button" className=" absolute -right-4 -top-4 ml-auto inline-flex items-center rounded-lg bg-transparent p-1.5 text-sm hover:text-gray-900  ">
+                          <svg className="h-6 w-6 rounded-full bg-red-400 p-1 text-white" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" fill-rule="evenodd" clip-rule="evenodd"></path></svg><span className="sr-only">Close modal</span>
+                        </button> */}
+                      </div>
+
+                      <div className="mx-auto w-full p-4 py-6">
+                        <RadioGroup value={AddressDataIndex} onChange={setAddressDataIndex}>
+                          <RadioGroup.Label className="sr-only">Server size</RadioGroup.Label>
+                          <div className="space-y-2">
+                            {sessionServ.token.addresses.map((addr, indx) => (
+                              <RadioGroup.Option
+                                key={addr.id}
+                                value={addr}
+                                className={({ active, checked }) =>
+                                  `${active
+                                    ? 'ring-2 ring-white ring-opacity-60 ring-offset-2 ring-offset-sky-300'
+                                    : ''
+                                  }
+                  ${checked ? 'bg-sky-900 bg-opacity-75 text-white' : 'bg-white'
+                                  }
+                    relative flex cursor-pointer rounded-lg px-5 py-4 shadow-md focus:outline-none`
+                                }
+                              >
+                                {({ active, checked }) => (
+                                  <>
+                                    <div className="flex w-full items-center justify-between">
+                                      <div className="flex items-center">
+                                        <div className="text-sm flex space-x-7">
+                                          <RadioGroup.Label
+                                            as="p"
+                                            className={`font-medium  ${checked ? 'text-white' : 'text-gray-900'
+                                              }`}
+                                          >
+                                            <div className="flex-col flex   sm:text-sm text-[10px]">
+                                              <h5 className="  ">NAME:</h5>
+                                              <h5 className="  ">ADDRESS:</h5>
+                                              <h5 className="">PHONE:</h5>
+                                            </div>
+                                          </RadioGroup.Label>
+                                          <RadioGroup.Description
+                                            as="span"
+                                            className={`inline ${checked ? 'text-sky-100' : 'text-gray-500'
+                                              }`}
+                                          >
+                                            <div className="sm:text-sm text-[10px]">
+                                              <h5 className="font-medium">{addr.name}</h5>
+                                              <h5 className="font-medium">{addr.area} - {addr.state} - {addr.country}</h5>
+                                              <h5 className="font-medium">{addr.phone}</h5>
+                                            </div>
+                                          </RadioGroup.Description>
+                                        </div>
+                                      </div>
+                                      {checked && (
+                                        <div className="shrink-0 text-white">
+                                          <CheckIcon className="h-6 w-6" />
+                                        </div>
+                                      )}
+                                    </div>
+                                  </>
+                                )}
+                              </RadioGroup.Option>
+                            ))}
+                          </div>
+                        </RadioGroup>
+                      </div>
+
+                      {/* <div className="space-y-3 px-6 py-5 ">
+                        <div className="flex justify-between">
+                          <div className="flex space-x-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="h-5 w-5">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                            </svg>
+                            <h5 className=" font-bold text-indigo-800">Addresses</h5>
+                          </div>
+                          <button className="rounded-lg bg-blue-500 px-3 py-2 text-sm uppercase text-white" onClick={() => {
+                            setavailableAddresses(false)
+                            setaddnewAddressFormVisibility(true)
+                          }}>Add New Address</button>
+                        </div>
+
+                        <h5 className="rounded-full bg-blue-300 px-2 py-1 text-sm font-bold text-indigo-800">SELECTED ADDRESS</h5>
+
+                        {sessionServ.token.addresses.map((addr, indx) => (
+
+                          <div className={(indx === 0 ? "!bg-blue-500 !text-white " : "") + "text-gray-500 flex justify-between space-x-2  px-4 py-4 cursor-pointer rounded-lg addressBlock border-2 border-gray-200"} id={indx + "addr"} onClick={() => { addrBlockOnClick(indx + "addr") }}>
+
+
+                            {/* <input type="radio" className="mb-auto m-1 focus:ring-0 w-3 h-3" /> */}
+                      {/* <div className="">
+                              <div className="flex space-x-4">
+                                <div className="flex-col flex  font-bold text-sm">
+                                  <h5 className="  ">NAME:</h5>
+                                  <h5 className="  ">ADDRESS:</h5>
+                                  <h5 className="">PHONE:</h5>
+                                </div>
+                                <div className="text-sm">
+                                  <h5 className="  font-medium ">{addr.name}</h5>
+                                  <h5 className="  font-medium">{addr.area} - {addr.state} - {addr.country}</h5>
+                                  <h5 className="  font-medium">{addr.phone}</h5>
+                                </div>
+                              </div>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={(indx === 0 ? "!fill-white" : "") + " w-6 h-6 fill-gray-200 my-auto  " + (indx + 'addr')}>
+                              <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" />
+                            </svg>
+                          </div>
+                        ))}
+
+
+                        <div className="flex bg-pink-100 p-2 text-xs text-blue-800 ">Changing your delivery address might affect the availability of some items in your cart, please remember to review you cart if or one you switch addresses.</div>
+
+
+                      </div> */}
+                      <div className="w-full bg-white px-6 py-3 sticky bottom-0">
+                        <button className="text-[11px]  px-3 py-2 w-full text-center bg-blue-500 text-white rounded-lg hover:bg-blue-600" onClick={() => { setaddNewAddress(false) }} >CONFIRM ADDRESS</button>
                       </div>
                     </div>
-                    <div>
-                      <label className="mb-3 block w-fit rounded-full bg-indigo-800 px-3 py-1 text-[10px] font-semibold text-white ">ADDRESS DETAILS</label>
 
-                      <div className="flex w-1/2">
-                        <span className="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-200 px-3 text-sm text-gray-900    ">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="h-5 w-5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-                          </svg>
-                        </span>
+                    : ""}
 
-                        <select id="type" name="type" value={formData.type} onChange={formDatahandleChange} className="focus:outline-none block w-full min-w-0 flex-1 rounded-none rounded-r-lg border border-gray-300 bg-gray-50 p-2.5 text-sm">
-                          <option selected value="Home">Home</option>
-                          <option value="Work">Work</option>
-                          <option value="Other">Other</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div className="flex space-x-6 ">
-                      <input type="text" name="state" value={formData.state} onChange={formDatahandleChange} onBlur={(e) => { e.target.value === "" ? e.target.classList.add("border-red-500") : e.target.classList.remove("border-red-500") }} className={" addressFormInputEle focus:outline-none block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 formTextBox"} placeholder="Emirates *" required />
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
 
-                      <input type="text" name="city" value={formData.city} onChange={formDatahandleChange} onBlur={(e) => { e.target.value === "" ? e.target.classList.add("border-red-500") : e.target.classList.remove("border-red-500") }} className={"focus:outline-none addressFormInputEle block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 formTextBox"} placeholder="City *" required />
-                    </div>
-
-
-                    <input type="text" name="street_address" value={formData.street_address} onChange={formDatahandleChange} onBlur={(e) => { e.target.value === "" ? e.target.classList.add("border-red-500") : e.target.classList.remove("border-red-500") }} placeholder="Street Address *" className={"focus:outline-none addressFormInputEle block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 "}
-                      required />
-
-                    <div className="flex space-x-6">
-                      <input name="flat_number" value={formData.flat_number} onChange={formDatahandleChange} type="text" onBlur={(e) => { e.target.value === "" ? e.target.classList.add("border-red-500") : e.target.classList.remove("border-red-500") }} className={"focus:outline-none addressFormInputEle block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500"} placeholder="Flat / Villa *" required />
-                      <input name="building" value={formData.building} onChange={formDatahandleChange} type="text" onBlur={(e) => { e.target.value === "" ? e.target.classList.add("border-red-500") : e.target.classList.remove("border-red-500") }} className={"focus:outline-none addressFormInputEle block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500"} placeholder="Building *"
-                        required />
-                    </div>
-
-
-                    <div className="flex ">
-                      <span className="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-200 px-3 text-sm text-gray-900    ">
-                        Country
-                      </span>
-
-                      <select id="country" name="country" value={formData.country} onChange={formDatahandleChange} className="focus:outline-none block w-full min-w-0 flex-1 rounded-none rounded-r-lg border border-gray-300 bg-gray-50 p-2.5 text-sm">
-                        <option selected value="United Arab Emirates">United Arab Emirates</option>
-                        <option value="Saudi Arabia">Saudi Arabia</option>
-                      </select>
-                    </div>
-                    <textarea name="additional_info" value={formData.additional_info} onChange={formDatahandleChange} className="w-full border-gray-300 rounded-lg border p-2.5 focus:outline-none text-sm" rows={1} placeholder="Additional information (eg. Area, Landmark)"></textarea>
-
-                    <div className=" sticky bottom-2  border-0 rounded-lg">
-                      <button type="submit" className=" w-full rounded-full bg-blue-500  py-1.5 text-center text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 " >SAVE ADDRESS</button>
-                    </div>
-
-                  </form>
-
-                </div>
-              </div>
-            </div> : ""}
-
-
-        </div> : ""
-      }
 
 
 

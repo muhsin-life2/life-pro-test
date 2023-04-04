@@ -1,21 +1,13 @@
-import { getSession } from 'next-auth/react'
-export default async function getSessionData(sessionData) {
-    var userAddrData = {
-        data: {
-            addresses: []
-        }
-    };
-    if (sessionData) {
-        const userAddrheaderRes = await fetch('https://prodapp.lifepharmacy.com/api/user/addresses', {
-            headers: {
-                Authorization: `Bearer ${sessionData.token.token}`
-            }
-        });
-        userAddrData = await userAddrheaderRes.json();
-    }
+import { Session } from "next-auth"
+export default async function getSessionData(cookie: string): Promise<Session>  {
+    const response = await fetch('http://localhost:3000/api/auth/session', {
+        headers: {
+            cookie,
+        },
+    });
+
+    const session = await response.json();
+
+    return Object.keys(session).length > 0 ? session : null;
 }
-    // const res = await fetch('https://prodapp.lifepharmacy.com/api/web/brands')
-
-    // if (!res.ok) throw new Error('failed to fetch data')
-
-    // return res.json()
+    
